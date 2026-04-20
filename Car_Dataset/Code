@@ -1,0 +1,66 @@
+headers = ["symboling","normalized-losses","make","fuel-type","aspiration", "num-of-doors","body-style",
+         "drive-wheels","engine-location","wheel-base", "length","width","height","curb-weight","engine-type",
+         "num-of-cylinders", "engine-size","fuel-system","bore","stroke","compression-ratio","horsepower",
+         "peak-rpm","city-mpg","highway-mpg","price"]
+
+import numpy as np
+import pandas as pd
+df = pd.read_csv("/content/car_dataset.data", names = headers)
+df
+df.replace("?", np.nan, inplace = True)
+df.head(5)
+missing_data = df.isnull()
+missing_data.head(5)
+for column in headers:
+  print(column)
+  print(missing_data[column].value_counts())  #.value_counts() - give unique values in column
+  print()
+
+#Deal with the missing values
+
+avg_norm_loss = df["normalized-losses"].astype('float').mean(axis=0)
+print("Average of normalized-losses:",avg_norm_loss)
+
+df['normalized-losses'].replace(np.nan,avg_norm_loss,inplace= True)
+print(df['normalized-losses'])
+
+avg_stroke = df["stroke"].astype('float').mean(axis=0)
+print("Average of stroke:",avg_stroke)
+df['stroke'].replace(np.nan,avg_stroke,inplace= True)
+
+avg_horsepower = df["horsepower"].astype('float').mean(axis=0)
+print("Average of hoursepower:",avg_horsepower)
+df['horsepower'].replace(np.nan,avg_horsepower,inplace= True)
+
+avg_peak_rpm = df["peak-rpm"].astype('float').mean(axis=0)
+print("Average of peak-rpm :",avg_peak_rpm )
+df['peak-rpm'].replace(np.nan,avg_peak_rpm ,inplace= True)
+
+print(df['num-of-doors'].value_counts())
+df["num-of-doors"].replace(np.nan,"four",inplace=True)
+
+#Drop row missing value row in price coulmn
+
+df.dropna(subset=['price'],axis=0,inplace = True)
+df.reset_index(drop=True,inplace=True)
+print(df['price'].value_counts())
+df['price'].info()
+
+#Binning
+import numpy as np
+import pandas as pd
+
+
+df['horsepower'] = pd.to_numeric(df['horsepower'], errors='coerce')
+
+df['horsepower'].fillna(df['horsepower'].mean(), inplace=True)
+
+bins = np.linspace(df['horsepower'].min(), df['horsepower'].max(), 4)
+group_names = ['Low', 'Medium', 'High']
+df['horsepower-binned'] = pd.cut( df['horsepower'],bins=bins,labels=group_names,include_lowest=True)
+
+print(df[['horsepower', 'horsepower-binned']].head())
+
+df['horsepower-binned'] = pd.cut(df['horsepower'],bins,labels=group_names,include_lowest=True)
+
+df[['horsepower', 'horsepower-binned']].head(20)
