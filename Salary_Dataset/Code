@@ -1,0 +1,28 @@
+# Import libraries
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.model_selection import train_test_split
+
+# Load dataset
+df = pd.read_csv("Salary_Dataset.csv")
+
+print(df.head())
+print(df.info())
+print(df.isnull().sum())
+df.fillna(df.mean(numeric_only=True), inplace=True)
+df["Purchased"] = df["Purchased"].map({"No": 0, "Yes": 1})
+df = pd.get_dummies(df, columns=["country"], drop_first=True)
+print(df.head())
+
+X = df.drop("Salary", axis=1)
+y = df["Salary"]
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+print("\nTraining Data Shape:", X_train.shape)
+print("Testing Data Shape:", X_test.shape)
+print("\nPreprocessing Completed Successfully!")
