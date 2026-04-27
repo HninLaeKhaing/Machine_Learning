@@ -1,0 +1,18 @@
+--- Model Evaluation ---
+Accuracy : 0.5423940149625935
+Precision: 0.5438373570520966
+Recall   : 0.981651376146789
+F1 Score : 0.6999182338511856
+ROC-AUC  : 0.522609916278137
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.47      0.02      0.04       366
+           1       0.54      0.98      0.70       436
+
+    accuracy                           0.54       802
+   macro avg       0.51      0.50      0.37       802
+weighted avg       0.51      0.54      0.40       802
+
+Prediction: Stock price will go UP tomorrow
