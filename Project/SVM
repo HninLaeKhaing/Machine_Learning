@@ -1,0 +1,143 @@
+# Apple Stock Trend Prediction using SVM
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    classification_report,
+    confusion_matrix,
+    ConfusionMatrixDisplay,
+    roc_curve
+)
+
+# STEP 1: Load Dataset
+df = pd.read_csv('/content/AAPL_2005_2020.csv')
+
+print("First 5 rows:")
+print(df.head())
+
+# STEP 2: Basic EDA
+print("\nShape:", df.shape)
+print("\nInfo:")
+print(df.info())
+print("\nMissing values:")
+print(df.isnull().sum())
+print("\nSummary:")
+print(df.describe())
+
+# Convert Date
+df['Date'] = pd.to_datetime(df['Date'])
+
+# STEP 3: Visualization
+plt.figure(figsize=(12,5))
+plt.plot(df['Date'], df['Close'])
+plt.title("Apple Closing Price Over Time")
+plt.xlabel("Date")
+plt.ylabel("Close Price")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# STEP 4: Feature Engineering
+df['Return'] = df['Close'].pct_change()
+df['MA_5'] = df['Close'].rolling(5).mean()
+df['MA_20'] = df['Close'].rolling(20).mean()
+df['Volatility'] = df['Return'].rolling(5).std()
+
+# Target variable (next day up/down)
+df['Target'] = (df['Close'].shift(-1) > df['Close']).astype(int)
+
+# Remove null rows
+df.dropna(inplace=True)
+
+# STEP 5: Features and Target
+X = df[['Open', 'High', 'Low', 'Close', 'Volume',
+        'Return', 'MA_5', 'MA_20', 'Volatility']]
+y = df['Target']
+
+# STEP 6: Train-Test Split
+# shuffle=False keeps time order for stock data
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, shuffle=False
+)
+
+# STEP 7: Feature Scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# STEP 8: Train Model
+model = SVC(kernel='rbf', C=1.0, probability=True)
+model.fit(X_train_scaled, y_train)
+
+# STEP 9: Prediction
+y_pred = model.predict(X_test_scaled)
+y_prob = model.predict_proba(X_test_scaled)[:, 1]
+
+# STEP 10: Evaluation Metrics
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+roc_auc = roc_auc_score(y_test, y_prob)
+
+print("\n--- Model Evaluation ---")
+print("Accuracy :", accuracy)
+print("Precision:", precision)
+print("Recall   :", recall)
+print("F1 Score :", f1)
+print("ROC-AUC  :", roc_auc)
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# STEP 11: Confusion Matrix Heatmap
+cm = confusion_matrix(y_test, y_pred)
+
+disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+disp.plot(cmap='Blues')
+plt.title("Confusion Matrix Heatmap")
+plt.show()
+
+# STEP 12: ROC Curve
+fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+
+plt.figure(figsize=(6,5))
+plt.plot(fpr, tpr, label=f"AUC = {roc_auc:.2f}")
+plt.plot([0, 1], [0, 1], linestyle='--')
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("ROC Curve")
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# STEP 13: Metric Visualization
+metrics = [accuracy, precision, recall, f1, roc_auc]
+labels = ['Accuracy', 'Precision', 'Recall', 'F1', 'ROC-AUC']
+
+plt.figure(figsize=(8,5))
+plt.bar(labels, metrics)
+plt.ylim(0, 1)
+plt.title("Performance Metrics")
+plt.ylabel("Score")
+plt.tight_layout()
+plt.show()
+
+# STEP 14: Sample Prediction
+sample = X_test.iloc[0:1]
+sample_scaled = scaler.transform(sample)
+prediction = model.predict(sample_scaled)
+
+if prediction[0] == 1:
+    print("\nPrediction: Stock price will go UP tomorrow")
+else:
+    print("\nPrediction: Stock price will go DOWN tomorrow")
